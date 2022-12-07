@@ -1,0 +1,8 @@
+# exe files
+*.exe
+
+# .sum files
+*.sum
+
+# .mod files
+go.mod
