@@ -20,7 +20,7 @@ func main() {
 	deployName := flag.String("d", "", "name of the deployment")
 	replica := flag.Int("r", 1, "number of replicas needed")
 	port := flag.Int("p", 80, "number of replicas needed")
-	rep := 1
+	// rep := 1
 	flag.Parse()
 	if *image == "" {
 		flag.PrintDefaults()
@@ -67,7 +67,7 @@ func main() {
 			Name: *deployName,
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: &rep,
+			// Replicas: &rep,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app": *deployName,
