@@ -30,7 +30,7 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	fmt.Printf("%s %s %s %d", *image, *deployName, *replica, *port)
+	fmt.Printf("%v %v %v %d", *image, *deployName, *replica, *port)
 
 	configPath := filepath.Clean(os.ExpandEnv(*kubeconfig))
 	config, err := clientcmd.BuildConfigFromFlags("", configPath)
