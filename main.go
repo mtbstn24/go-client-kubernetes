@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	appsv1 "k8s.io/api/apps/v1"
+	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -16,7 +18,9 @@ func main() {
 	kubeconfig := flag.String("kubeconfig", "$USERPROFILE/.kube/config", "location to the Kube config file")
 	image := flag.String("i", "", "image to be used")
 	deployName := flag.String("d", "", "name of the deployment")
-	replica := flag.String("r", "1", "number of replicas needed")
+	replica := flag.Int("r", 1, "number of replicas needed")
+	port := flag.Int("p", 80, "number of replicas needed")
+	rep := 1
 	flag.Parse()
 	if *image == "" {
 		flag.PrintDefaults()
@@ -26,7 +30,7 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	fmt.Printf("%s %s %s", *image, *deployName, *replica)
+	fmt.Printf("%s %s %s %d", *image, *deployName, *replica, *port)
 
 	configPath := filepath.Clean(os.ExpandEnv(*kubeconfig))
 	config, err := clientcmd.BuildConfigFromFlags("", configPath)
@@ -56,4 +60,45 @@ func main() {
 	for _, deployment := range deployments.Items {
 		fmt.Printf("Deployment name : %s \n", deployment.Name)
 	}
+
+	// deployClient := clientset.AppsV1().Deployments("default")
+	deployment := &appsv1.Deployment{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: *deployName,
+		},
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &rep,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app": *deployName,
+				},
+			},
+			Template: apiv1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app": *deployName,
+					},
+				},
+				Spec: apiv1.PodSpec{
+					Containers: []apiv1.Container{
+						{
+							Name:  "web",
+							Image: *image,
+							Ports: []apiv1.ContainerPort{
+								{
+									Name:          "http",
+									Protocol:      apiv1.ProtocolTCP,
+									ContainerPort: 3000,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	fmt.Println("Creating Deployment....")
+	println(deployment)
+
 }
