@@ -20,7 +20,6 @@ func main() {
 	deployName := flag.String("d", "", "name of the deployment")
 	replica := flag.Int("r", 1, "number of replicas needed")
 	port := flag.Int("p", 80, "number of replicas needed")
-	// rep := 1
 	flag.Parse()
 	if *image == "" {
 		flag.PrintDefaults()
@@ -30,6 +29,7 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
+	rep := int32(*replica)
 	fmt.Printf("%v %v %v %d", *image, *deployName, *replica, *port)
 
 	configPath := filepath.Clean(os.ExpandEnv(*kubeconfig))
@@ -47,7 +47,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println("Default namespace Pods")
+	fmt.Println("\nDefault namespace Pods")
 	for _, pod := range pods.Items {
 		fmt.Printf("Pod name : %s \n", pod.Name)
 	}
@@ -61,13 +61,13 @@ func main() {
 		fmt.Printf("Deployment name : %s \n", deployment.Name)
 	}
 
-	// deployClient := clientset.AppsV1().Deployments("default")
+	deployClient := clientset.AppsV1().Deployments("default")
 	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: *deployName,
 		},
 		Spec: appsv1.DeploymentSpec{
-			// Replicas: &rep,
+			Replicas: &rep,
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"app": *deployName,
@@ -99,6 +99,10 @@ func main() {
 	}
 
 	fmt.Println("Creating Deployment....")
-	println(deployment)
+	result, err := deployClient.Create(context.TODO(), deployment, metav1.CreateOptions{})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Created Deployment %q \n", result.GetObjectMeta().GetName())
 
 }
