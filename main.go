@@ -10,6 +10,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -19,7 +20,7 @@ func main() {
 	image := flag.String("i", "", "image to be used")
 	deployName := flag.String("d", "", "name of the deployment")
 	replica := flag.Int("r", 1, "number of replicas needed")
-	port := flag.Int("p", 80, "number of replicas needed")
+	port := flag.Int("p", 80, "port number to be used")
 	flag.Parse()
 	if *image == "" {
 		flag.PrintDefaults()
@@ -88,11 +89,35 @@ func main() {
 								{
 									Name:          "http",
 									Protocol:      apiv1.ProtocolTCP,
-									ContainerPort: 3000,
+									ContainerPort: int32(*port),
 								},
 							},
 						},
 					},
+				},
+			},
+		},
+	}
+
+	serviceName := *deployName + "svc"
+	serviceClient := clientset.CoreV1().Services("default")
+	service := &apiv1.Service{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Service",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: serviceName,
+		},
+		Spec: apiv1.ServiceSpec{
+			Selector: map[string]string{
+				"app": *deployName,
+			},
+			Ports: []apiv1.ServicePort{
+				{
+					Name:       "http",
+					Protocol:   apiv1.ProtocolTCP,
+					Port:       int32(*port),
+					TargetPort: intstr.FromInt(*port),
 				},
 			},
 		},
@@ -104,5 +129,12 @@ func main() {
 		panic(err)
 	}
 	fmt.Printf("Created Deployment %q \n", result.GetObjectMeta().GetName())
+
+	fmt.Println("Creating Service....")
+	result1, err := serviceClient.Create(context.TODO(), service, metav1.CreateOptions{})
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Created Service %q \n", result1.GetName())
 
 }
