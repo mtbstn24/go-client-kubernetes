@@ -9,6 +9,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	apiv1 "k8s.io/api/core/v1"
+	netv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
@@ -99,7 +100,7 @@ func main() {
 		},
 	}
 
-	serviceName := *deployName + "svc"
+	serviceName := *deployName + "-svc"
 	serviceClient := clientset.CoreV1().Services("default")
 	service := &apiv1.Service{
 		TypeMeta: metav1.TypeMeta{
@@ -123,6 +124,43 @@ func main() {
 		},
 	}
 
+	ingressName := *deployName + "-ingress"
+	prefix := netv1.PathType("Prefix")
+	ingressClient := clientset.NetworkingV1().Ingresses("default")
+	ingress := &netv1.Ingress{
+		TypeMeta: metav1.TypeMeta{
+			Kind: "Ingress",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: ingressName,
+		},
+		Spec: netv1.IngressSpec{
+			Rules: []netv1.IngressRule{
+				{
+					Host: *deployName + ".info",
+					IngressRuleValue: netv1.IngressRuleValue{
+						HTTP: &netv1.HTTPIngressRuleValue{
+							Paths: []netv1.HTTPIngressPath{
+								{
+									Path:     "/",
+									PathType: &prefix,
+									Backend: netv1.IngressBackend{
+										Service: &netv1.IngressServiceBackend{
+											Name: serviceName,
+											Port: netv1.ServiceBackendPort{
+												Number: int32(*port),
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	fmt.Println("Creating Deployment....")
 	result, err := deployClient.Create(context.TODO(), deployment, metav1.CreateOptions{})
 	if err != nil {
@@ -137,4 +175,13 @@ func main() {
 	}
 	fmt.Printf("Created Service %q \n", result1.GetName())
 
+	fmt.Println("Exposing the service using the Ingress....")
+	result2, err := ingressClient.Create(context.TODO(), ingress, metav1.CreateOptions{})
+	if err != nil {
+		panic(err)
+	}
+	url := "http:/" + result2.Spec.Rules[0].HTTP.Paths[0].Path + result2.Spec.Rules[0].Host
+	fmt.Printf("Service Exposed. Access the service using %q \n", url)
+
+	fmt.Printf("\n----------------End of Program----------------\n\n")
 }
