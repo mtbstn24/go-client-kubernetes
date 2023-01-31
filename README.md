@@ -26,7 +26,7 @@ Edit the C:/Windows/System32/drivers/etc/hosts file to include the exposed host 
 
 ## Sample Demo
 ```
-go run . -i mtbstn24/k8s-web-hello:latest -d project2 -p 3001
+go run . -i <image_name> -d project2 -p 3001
 ```
 
 ### Output
