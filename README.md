@@ -31,7 +31,7 @@ go run . -i <image_name> -d project2 -p 3001
 
 ### Output
 ```
-mtbstn24/k8s-web-hello:latest project2 1 3001
+<image_name> project2 1 3001
 Default namespace Pods
 Pod name : nginx-deployment-5fbdf85c67-wtwf9
 
