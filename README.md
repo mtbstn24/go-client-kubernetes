@@ -1,4 +1,5 @@
 # go-client-kubernetes
+CLI program that takes inputs such as image name, deployment name, port number, replica count. Then deploys the image and exposes as a service creating an ingress. Outputs the host url of the exposed service.
 
 ## Prerequisites
 - Docker Engine
@@ -20,7 +21,7 @@ go run .
 go run . -i IMAGE_NAME -d DEPLOYMENT_NAME -p PORT_NUMBER -r REPLICA_COUNT -kubeconfig PATH_TO_KUBE_CONFIG
 ```
 ### In windows
-Edit the C:/Windows/System32/drivers/etc/hosts file to include the exposed host with proper intendations (opent the file as administrator).
+Edit the C:/Windows/System32/drivers/etc/hosts file to include the exposed host with proper intendations (open the file as administrator).
   - ```127.0.0.1 EXPOSED_HOST```
 
 
